@@ -117,3 +117,19 @@ npm run dev
 ```
 
 Open **[http://localhost:3000](http://localhost:3000)** in your browser.
+
+### home page
+
+![home page](./public/home.png)
+
+### register page
+
+![register page](./public/register.png)
+
+### Logged in viewer page
+
+![register page](./public/loggedin.png)
+
+### Logged in viewer page
+
+![register page](./public/editor.png)
