@@ -25,7 +25,6 @@ function Avatar({ name, color, isSelf }) {
       title={name + (isSelf ? " (You)" : "")}
     >
       {name.charAt(0).toUpperCase()}
-
       <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-zinc-900 px-2 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
         {name} {isSelf && "(You)"}
       </div>
@@ -36,7 +35,6 @@ function Avatar({ name, color, isSelf }) {
 function ActiveUsers() {
   const others = useOthers();
   const self = useSelf();
-
   const hasMoreUsers = others.length > 3;
 
   return (
@@ -49,13 +47,11 @@ function ActiveUsers() {
             color={info?.color || "#3b82f6"}
           />
         ))}
-
         {hasMoreUsers && (
           <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-zinc-100 text-xs font-medium text-zinc-500">
             +{others.length - 3}
           </div>
         )}
-
         {self && (
           <Avatar
             name={self.info?.name || "Me"}
@@ -63,16 +59,6 @@ function ActiveUsers() {
             isSelf
           />
         )}
-      </div>
-
-      <div className="flex items-center gap-1.5 ml-2">
-        <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-        </span>
-        <span className="text-[10px] font-medium text-zinc-400 hidden sm:inline-block">
-          {others.length > 0 ? `${others.length} online` : "Online"}
-        </span>
       </div>
     </div>
   );
@@ -166,7 +152,6 @@ function Toolbar({ editor, onSave, isSaving }) {
             {isSaving ? "Saving..." : "Save"}
           </button>
 
-          {/* SAVE POPOVER MENU */}
           {showSaveMenu && (
             <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-zinc-100 p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
               <h4 className="text-xs font-semibold text-zinc-900 mb-2">
@@ -248,7 +233,7 @@ function Editor({ doc, initialContent, restoreContent, onSave }) {
     setIsSaving(true);
     try {
       const content = JSON.stringify(editor.getJSON());
-      await onSave(content, label); // Pass label up
+      await onSave(content, label);
     } catch (error) {
       console.error("Save failed", error);
       alert("Failed to save.");
@@ -285,7 +270,6 @@ function CollaborativeEditor({ initialContent, restoreContent, onSave }) {
   }, [room]);
 
   if (!doc || !provider) return null;
-
   return (
     <Editor
       doc={doc}
@@ -303,8 +287,6 @@ export default function LiveblocksEditorWrapper({
   restoreContent,
   onSave,
 }) {
-  if (!user) return null;
-
   const resolveAuth = useCallback(async (room) => {
     const jwt = await AuthService.getJWT();
     const response = await fetch("/api/liveblocks-auth", {
@@ -314,6 +296,8 @@ export default function LiveblocksEditorWrapper({
     });
     return await response.json();
   }, []);
+
+  if (!user) return null;
 
   return (
     <LiveblocksProvider authEndpoint={resolveAuth}>
