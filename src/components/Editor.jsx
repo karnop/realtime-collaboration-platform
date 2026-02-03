@@ -15,7 +15,6 @@ import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { useEffect, useState, useCallback } from "react";
 import { AuthService } from "@/lib/appwrite";
 
-// Toolbar Component
 function Toolbar({ editor, onSave, isSaving }) {
   if (!editor) return null;
 
@@ -90,7 +89,7 @@ function Toolbar({ editor, onSave, isSaving }) {
 }
 
 // Editor Instance
-function Editor({ doc, initialContent, onSave }) {
+function Editor({ doc, initialContent, restoreContent, onSave }) {
   const [isSaving, setIsSaving] = useState(false);
 
   const editor = useEditor({
@@ -108,17 +107,34 @@ function Editor({ doc, initialContent, onSave }) {
     ],
   });
 
-  // Handle Initial Content Loading
   useEffect(() => {
     if (editor && initialContent && !editor.getText()) {
       try {
-        const content = JSON.parse(initialContent);
+        const content =
+          typeof initialContent === "string"
+            ? JSON.parse(initialContent)
+            : initialContent;
         editor.commands.setContent(content);
       } catch (e) {
         console.error("Initial content parse error:", e);
       }
     }
   }, [editor, initialContent]);
+
+  useEffect(() => {
+    if (editor && restoreContent) {
+      try {
+        const content =
+          typeof restoreContent === "string"
+            ? JSON.parse(restoreContent)
+            : restoreContent;
+
+        editor.commands.setContent(content);
+      } catch (e) {
+        console.error("Restore content parse error:", e);
+      }
+    }
+  }, [editor, restoreContent]);
 
   const handleSave = async () => {
     if (!editor) return;
@@ -145,8 +161,7 @@ function Editor({ doc, initialContent, onSave }) {
   );
 }
 
-// Room Wrapper
-function CollaborativeEditor({ initialContent, onSave }) {
+function CollaborativeEditor({ initialContent, restoreContent, onSave }) {
   const room = useRoom();
   const [doc, setDoc] = useState();
   const [provider, setProvider] = useState();
@@ -154,10 +169,8 @@ function CollaborativeEditor({ initialContent, onSave }) {
   useEffect(() => {
     const yDoc = new Y.Doc();
     const yProvider = new LiveblocksYjsProvider(room, yDoc);
-
     setDoc(yDoc);
     setProvider(yProvider);
-
     return () => {
       yDoc.destroy();
       yProvider.destroy();
@@ -166,32 +179,32 @@ function CollaborativeEditor({ initialContent, onSave }) {
 
   if (!doc || !provider) return null;
 
-  return <Editor doc={doc} initialContent={initialContent} onSave={onSave} />;
+  return (
+    <Editor
+      doc={doc}
+      initialContent={initialContent}
+      restoreContent={restoreContent}
+      onSave={onSave}
+    />
+  );
 }
 
-// Main Entry
 export default function LiveblocksEditorWrapper({
   roomId,
   user,
   initialContent,
+  restoreContent,
   onSave,
 }) {
   if (!user) return null;
 
-  // Custom Authentication resolver
   const resolveAuth = useCallback(async (room) => {
-    // 1. Generate JWT from Appwrite Client SDK
     const jwt = await AuthService.getJWT();
-
-    // 2. Call our API route with the JWT
     const response = await fetch("/api/liveblocks-auth", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ room, token: jwt }),
     });
-
     return await response.json();
   }, []);
 
@@ -208,6 +221,7 @@ export default function LiveblocksEditorWrapper({
           {() => (
             <CollaborativeEditor
               initialContent={initialContent}
+              restoreContent={restoreContent}
               onSave={onSave}
             />
           )}
