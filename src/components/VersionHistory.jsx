@@ -13,22 +13,22 @@ export default function VersionHistory({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const fetchVersions = async () => {
+      setLoading(true);
+      try {
+        const list = await DocumentService.getVersions(documentId);
+        setVersions(list);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (isOpen) {
       fetchVersions();
     }
   }, [isOpen, documentId]);
-
-  const fetchVersions = async () => {
-    setLoading(true);
-    try {
-      const list = await DocumentService.getVersions(documentId);
-      setVersions(list);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString("en-US", {

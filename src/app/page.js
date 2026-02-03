@@ -153,7 +153,7 @@ export default function Home() {
                 No documents found
               </h3>
               <p className="text-zinc-500 max-w-sm mx-auto mb-6">
-                You haven't created any documents yet. Create one to get
+                You haven&apos;t created any documents yet. Create one to get
                 started.
               </p>
             </div>
