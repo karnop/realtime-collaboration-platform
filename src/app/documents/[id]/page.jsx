@@ -46,12 +46,14 @@ export default function DocumentPage({ params }) {
     init();
   }, [id, router]);
 
-  const handleSave = async (content) => {
+  const handleSave = async (content, label) => {
     try {
       await DocumentService.updateDocument(id, { body: content });
-      await DocumentService.createVersion(id, content, "Manual Save");
+      // If label is empty/null, default to "Manual Save"
+      const versionLabel = label && label.trim() !== "" ? label : "Manual Save";
+      await DocumentService.createVersion(id, content, versionLabel);
 
-      setCopySuccess("Saved & Version Created!");
+      setCopySuccess("Saved!");
       setTimeout(() => setCopySuccess(""), 2000);
     } catch (error) {
       console.error("Failed to save:", error);
@@ -62,7 +64,7 @@ export default function DocumentPage({ params }) {
   const handleRestore = async (content) => {
     setRestoreData({ body: content, timestamp: Date.now() });
     setShowHistory(false);
-    await handleSave(content);
+    await handleSave(content, "Restored Version");
 
     setCopySuccess("Version Restored!");
     setTimeout(() => setCopySuccess(""), 2000);
@@ -118,7 +120,7 @@ export default function DocumentPage({ params }) {
             onClick={() => setShowHistory(true)}
             className="px-3 py-1.5 text-zinc-600 text-xs font-medium hover:bg-zinc-100 rounded transition-colors flex items-center gap-1"
           >
-            <span>🕒</span> History
+            <span></span> History
           </button>
 
           <button
