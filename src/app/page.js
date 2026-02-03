@@ -13,19 +13,17 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [copiedId, setCopiedId] = useState(null);
 
   useEffect(() => {
     const init = async () => {
       try {
         const currentUser = await AuthService.getCurrentUser();
-
         if (!currentUser) {
           setLoading(false);
           return;
         }
-
         setUser(currentUser);
-
         const docs = await DocumentService.getDocuments(currentUser.$id);
         setDocuments(docs);
       } catch (error) {
@@ -34,9 +32,19 @@ export default function Home() {
         setLoading(false);
       }
     };
-
     init();
   }, [router]);
+
+  const handleShare = (e, docId) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const url = `${window.location.origin}/documents/${docId}`;
+    navigator.clipboard.writeText(url);
+
+    setCopiedId(docId);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   if (loading) {
     return (
@@ -46,11 +54,8 @@ export default function Home() {
     );
   }
 
-  if (!user) {
-    return <LandingPage />;
-  }
+  if (!user) return <LandingPage />;
 
-  // showing dashboard if user is logged in
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "short",
@@ -63,7 +68,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-zinc-50">
       <main className="flex-1 p-6 lg:p-12">
         <div className="mx-auto max-w-7xl">
-          {/* Dashboard Header */}
+          {/* Header */}
           <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-12">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-emerald-100">
@@ -86,8 +91,6 @@ export default function Home() {
               <button
                 onClick={async () => {
                   await AuthService.logout();
-                  router.push("/login"); // Redirect to login (which will now show Landing Page eventually)
-                  // Force reload to clear state if needed, or just let router handle it
                   window.location.reload();
                 }}
                 className="px-4 py-2 text-sm font-medium text-zinc-700 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors"
@@ -97,33 +100,47 @@ export default function Home() {
             </div>
           </header>
 
-          {/* Action Bar */}
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold text-zinc-900">My Documents</h2>
             <CreateDocumentBtn userId={user?.$id} />
           </div>
 
-          {/* Document Grid */}
           {documents.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {documents.map((doc) => (
                 <Link
                   href={`/documents/${doc.$id}`}
                   key={doc.$id}
-                  className="group block bg-white rounded-xl border border-zinc-200 p-6 hover:shadow-lg hover:shadow-zinc-200/50 hover:border-emerald-500/30 transition-all duration-200"
+                  className="group block bg-white rounded-xl border border-zinc-200 p-6 hover:shadow-lg hover:shadow-zinc-200/50 hover:border-emerald-500/30 transition-all duration-200 relative"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="h-10 w-10 rounded-lg bg-zinc-50 flex items-center justify-center text-xl group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
                       📄
                     </div>
-                    <span className="text-xs text-zinc-400 font-mono">
-                      {formatDate(doc.$createdAt)}
-                    </span>
+                    <button
+                      onClick={(e) => handleShare(e, doc.$id)}
+                      className="p-2 -mr-2 -mt-2 rounded-full hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900 transition-colors"
+                      title="Copy Link"
+                    >
+                      {copiedId === doc.$id ? (
+                        <span className="text-xs font-bold text-emerald-600">
+                          Copied!
+                        </span>
+                      ) : (
+                        "share"
+                      )}
+                    </button>
                   </div>
+
                   <h3 className="font-semibold text-zinc-900 truncate pr-4 mb-1 group-hover:text-emerald-700 transition-colors">
                     {doc.title}
                   </h3>
-                  <p className="text-xs text-zinc-500">Last edited by you</p>
+
+                  <div className="flex justify-between items-center mt-4">
+                    <p className="text-xs text-zinc-500">
+                      Edited {formatDate(doc.$updatedAt)}
+                    </p>
+                  </div>
                 </Link>
               ))}
             </div>
@@ -143,8 +160,6 @@ export default function Home() {
           )}
         </div>
       </main>
-
-      {/* Dashboard Footer */}
       <Footer />
     </div>
   );
